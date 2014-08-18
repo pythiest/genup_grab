@@ -369,10 +369,10 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
     for loc in reversed(locuses):
         tab_operon_genes+="|"+loc.qualifiers["locus_tag"][0]
         tab_operon_prots+="|"+loc.qualifiers["protein_id"][0]
-                        
+    
     #define tabbed field
     tabulated=nuc_rec.id + "|" + fasta_body \
-              +taxonomy+tab_operon_genes+tab_operon_prots
+              +taxonomy+tab_operon_prots
     
     return fasta_field, tabulated
     
