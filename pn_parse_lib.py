@@ -91,6 +91,9 @@ def parse_nuc_accession(nuc_acc):
         nuc_acc=nuc_acc.rstrip(")")
     else:
         seq_strand="1"
+    
+    if nuc_acc[0:4]=="join":
+        return -1,-1,-1,-1    
         
     #get genome accession and positions
     gen_acc, gen_pos=nuc_acc.split(":")
@@ -295,7 +298,11 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
             #an intergenic region (the segment was too small)
             if (str(cur_feature.location).startswith("[<")):
                 print "|---->Run out of upstream space."
-                return(-1,-1)
+                if (last_start is None):
+                    print "|---->Likely misannotated start."
+                    return(-1,-2)
+                else:
+                    return(-1,-1)
             else:
                 #if in proper orientation
                 if (cur_feature.strand==1):
@@ -328,7 +335,7 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
     #if we did not manage to get something
     if (last_start is None):
         #assuming internet connection problem, wait it out a bit
-        time.sleep(30)  #sleep for 30 seconds
+        #time.sleep(30)  #sleep for 30 seconds
         print "|---->No data retrieved."
         #return that we were not able to grab anything
         return(-2,-2)

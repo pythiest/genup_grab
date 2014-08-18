@@ -107,33 +107,46 @@ def main():
         if nuc_acc:
             #parse the nucleotide accession string to obtain acc, strand...
             acc, strand, sstart, sstop=PN.parse_nuc_accession(nuc_acc)
-            #grab the upstream (window) sequence object
-            up_seq = PN.SeqIO_grab_ext_nuc_rec([acc,strand,sstart,
+            if acc==-1:
+                print "Error parsing: ", GI
+                err_file.write(GI)
+                err_file.write("\t"+"Parsing error (join?)!")
+                err_file.write("\n")
+            else:
+                #grab the upstream (window) sequence object
+                up_seq = PN.SeqIO_grab_ext_nuc_rec([acc,strand,sstart,
                                                sstop], w_size)           
-            #trace operon and grab upstream sequence
-            fasta, tabbed = PN.SeqIO_extract_operon_up(up_seq, off_up, 
+                #trace operon and grab upstream sequence
+                fasta, tabbed = PN.SeqIO_extract_operon_up(up_seq, off_up, 
                                                        off_dw, int_dist)
             
-            #if operon could not be completed for this one
-            if (fasta==-1):
-                #write the protein ID to the error file
-                err_file.write(GI)
-                err_file.write("\n")
-                print  "Logging error. \n"
-            elif (fasta==-2):
-                #write to error file
-                err_file.write(GI)+"\t"+"No data obtained!"
-                err_file.write("\n")
-                print  "Logging error. \n"
-            else:
-                #print fasta_seq
-                out_file.write(fasta+"\n")
-                #print tabbed seq
-                out_file_tab.write(tabbed+"\n")
+                #if operon could not be completed for this one
+                if (fasta==-1):
+                    #write the protein ID to the error file
+                    err_file.write(GI)
+                    if tabbed == -2:
+                        err_file.write("\t"+"Likely misannotated start")
+                    err_file.write("\n")
+                    print  "Logging error. \n"
+                elif (fasta==-2):
+                    #write to error file
+                    print GI
+                    err_file.write(GI)
+                    err_file.write("\t"+"No data obtained!")
+                    err_file.write("\n")
+                    print  "Logging error. \n"
+                else:
+                    #print fasta_seq
+                    out_file.write(fasta+"\n")
+                    #print tabbed seq
+                    out_file_tab.write(tabbed+"\n")
             
         else:
             print "No nucleotide accession available for: ", GI
-    
+            err_file.write(GI)
+            err_file.write("\t"+"No nucleotide accession available!")
+            err_file.write("\n")
+                
     out_file.close()
     out_file_tab.close()
     err_file.close()
