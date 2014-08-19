@@ -157,9 +157,9 @@ def main():
                 err_file.write("\t"+"No nucleotide accession available!")
                 err_file.write("\n")
             if nuc_acc==-2:
-                print "Efectch failed for: ", GI
+                print "Efetch failed for: ", GI
                 err_file.write(GI)
-                err_file.write("\t"+"Failed efetfch!")
+                err_file.write("\t"+"Failed efetch!")
                 err_file.write("\n")
             
     out_file.close()
