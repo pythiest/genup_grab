@@ -109,11 +109,18 @@ def get_nuc_acc(prot_GI):
     """gets a protein GI and uses eUTILS to navigate NCBI and fetch the
     associated CDS nucleotide accession GI with coordinates
     """
-    #get handle to DB object (protein DB)
-    prot_handle = Entrez.efetch(db="protein", id=prot_GI, retmode="xml")
-    #donwload the handler associated data
-    prot_records = Entrez.read(prot_handle)
-    prot_handle.close()
+
+   #get handle to DB object (protein DB) in GB/text format
+    try:
+        #get handle to DB object (protein DB)
+        prot_handle = Entrez.efetch(db="protein", id=prot_GI, retmode="xml")
+        #donwload the handler associated data
+        prot_records = Entrez.read(prot_handle)
+        prot_handle.close()
+    except:
+        print "Efetch failed: ", prot_GI
+        return -2    
+
     time.sleep(4)  #sleep for 5 seconds
     
     #get the feature list from first element in the records list
@@ -130,7 +137,7 @@ def get_nuc_acc(prot_GI):
                     return genome_loc
                     
     #return "null" if feature not found
-    return None
+    return -1
                
 
 #---------------------------------------------------------------
@@ -140,11 +147,17 @@ def SeqIO_get_nuc_acc(prot_GI):
     Uses SeqIO to parse the protein record and extract the CDS + position
     """
     #get handle to DB object (protein DB) in GB/text format
-    prot_handle = Entrez.efetch(db="protein", id=prot_GI, rettype="gb", 
-                                retmode="text")
-    #donwload the handler associated data with GB parsers
-    prot_record = SeqIO.read(prot_handle,"gb")
-    prot_handle.close()
+    try:
+        prot_handle = Entrez.efetch(db="protein", id=prot_GI, 
+                                    rettype="gb", retmode="text")
+        #donwload the handler associated data with GB parsers
+        prot_record = SeqIO.read(prot_handle,"gb")
+        prot_handle.close()
+    except:
+        print "Efetch failed: ", prot_GI
+        return -2
+    
+
     time.sleep(5)  #sleep for 5 seconds
 
     #the SeqIO parser provides us a neat protein record split into 
@@ -163,7 +176,7 @@ def SeqIO_get_nuc_acc(prot_GI):
             return genome_loc[0]        
 
     #return "null" if feature not found
-    return None
+    return -1
             
 #---------------------------------------------------------------
 def SeqIO_get_nuc_rec(nuc_acc):
@@ -172,12 +185,18 @@ def SeqIO_get_nuc_rec(nuc_acc):
        at those positions in FASTA format
        Uses SeqIO read to parse the object
     """
-    nuc_handle = Entrez.efetch(db="nuccore", id=nuc_acc[0], 
-                                retmode="text", rettype="gb",
-                                strand=nuc_acc[1], seq_start=nuc_acc[2],
-                                seq_stop=nuc_acc[3])
-    nuc_records = SeqIO.read(nuc_handle,"gb")
-    nuc_handle.close()
+    #get nucleotide handle 
+    try:
+        nuc_handle = Entrez.efetch(db="nuccore", id=nuc_acc[0], 
+                                   retmode="text", rettype="gb",
+                                   strand=nuc_acc[1], seq_start=nuc_acc[2],
+                                   seq_stop=nuc_acc[3])
+        nuc_records = SeqIO.read(nuc_handle,"gb")
+        nuc_handle.close()
+    except:
+        print "Efetch failed: ", nuc_acc
+        return None    
+
     time.sleep(5)  #sleep for 5 seconds
     #return record in fasta format
     return nuc_records.format("fasta")
@@ -257,11 +276,19 @@ def SeqIO_grab_ext_nuc_rec(nuc_acc, window_size):
        for <-o-, we have        <-o- <-- --> <--
            but we obtain        --> <-- --> -o->
     """
-    nuc_handle = Entrez.efetch(db="nuccore", id=nuc_acc[0], 
-                               retmode="text", rettype="gb", strand=sstrand,
-                               seq_start=sstart, seq_stop=sstop)
-    nuc_records = SeqIO.read(nuc_handle,"gb")
-    nuc_handle.close()
+    
+
+    #get nucleotide handle 
+    try:
+        nuc_handle = Entrez.efetch(db="nuccore", id=nuc_acc[0], 
+                                   retmode="text", rettype="gb", strand=sstrand,
+                                   seq_start=sstart, seq_stop=sstop)
+        nuc_records = SeqIO.read(nuc_handle,"gb")
+        nuc_handle.close()
+    except:
+        print "Efetch failed: ", nuc_acc
+        return None        
+
     
     time.sleep(4)  #sleep for 5 seconds
     
@@ -358,8 +385,15 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
     #pair locus tag and protein ID
     operon_members=""
     for loc in reversed(locuses):
-        operon_members+="|"+loc.qualifiers["locus_tag"][0]+"["+\
-                        loc.qualifiers["protein_id"][0]+"]"
+        operon_members+="|"
+        if "locus_tag" in loc.qualifiers:
+            operon_members+=loc.qualifiers["locus_tag"][0]
+        else:
+            operon_members+="NoLocusTag"
+        if "protein_id" in loc.qualifiers:
+            operon_members+="["+loc.qualifiers["protein_id"][0]+"]"
+        else:
+            operon_members+="[NoProtAcc]"
     #define fasta header
     fasta_header=">"+nuc_rec.id+taxonomy+operon_members
     
@@ -374,8 +408,14 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
     tab_operon_genes=""
     tab_operon_prots=""
     for loc in reversed(locuses):
-        tab_operon_genes+="|"+loc.qualifiers["locus_tag"][0]
-        tab_operon_prots+="|"+loc.qualifiers["protein_id"][0]
+        if "locus_tag" in loc.qualifiers:
+            tab_operon_genes+="|"+loc.qualifiers["locus_tag"][0]
+        else:
+            tab_operon_genes+="|"+"NoLocusTag"
+        if "protein_id" in loc.qualifiers:
+            tab_operon_prots+="|"+loc.qualifiers["protein_id"][0]
+        else:
+            tab_operon_prots+="|"+"NoProtAcc"
     
     #define tabbed field
     tabulated=nuc_rec.id + "|" + fasta_body \

@@ -104,7 +104,7 @@ def main():
         #get the associated nucleotide accession (+position)
         nuc_acc=PN.get_nuc_acc(GI)
         #if we can obtain nucleotide accession
-        if nuc_acc:
+        if (nuc_acc !=-1) and (nuc_acc != -2):
             #parse the nucleotide accession string to obtain acc, strand...
             acc, strand, sstart, sstop=PN.parse_nuc_accession(nuc_acc)
             if acc==-1:
@@ -115,7 +115,14 @@ def main():
             else:
                 #grab the upstream (window) sequence object
                 up_seq = PN.SeqIO_grab_ext_nuc_rec([acc,strand,sstart,
-                                               sstop], w_size)           
+                                               sstop], w_size)   
+                #if there was an error fetching
+                if (not up_seq):
+                    print "Efetch error: ", GI
+                    err_file.write(GI)
+                    err_file.write("\t"+"Efetch error!")
+                    err_file.write("\n")
+                    
                 #trace operon and grab upstream sequence
                 fasta, tabbed = PN.SeqIO_extract_operon_up(up_seq, off_up, 
                                                        off_dw, int_dist)
@@ -140,13 +147,21 @@ def main():
                     out_file.write(fasta+"\n")
                     #print tabbed seq
                     out_file_tab.write(tabbed+"\n")
-            
+
+        #handle access to nucleotide record errors
+        #either protein has no nucleotide record, or efetch crashed
         else:
-            print "No nucleotide accession available for: ", GI
-            err_file.write(GI)
-            err_file.write("\t"+"No nucleotide accession available!")
-            err_file.write("\n")
-                
+            if nuc_acc==-1:
+                print "No nucleotide accession available for: ", GI
+                err_file.write(GI)
+                err_file.write("\t"+"No nucleotide accession available!")
+                err_file.write("\n")
+            if nuc_acc==-2:
+                print "Efectch failed for: ", GI
+                err_file.write(GI)
+                err_file.write("\t"+"Failed efetfch!")
+                err_file.write("\n")
+            
     out_file.close()
     out_file_tab.close()
     err_file.close()
