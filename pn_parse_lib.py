@@ -366,8 +366,7 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
     
     #if we did not manage to get something
     if (last_start is None):
-        #assuming internet connection problem, wait it out a bit
-        #time.sleep(30)  #sleep for 30 seconds
+        #assuming internet connection problem
         print "|---->No data retrieved."
         #return that we were not able to grab anything
         return(-2,-2)
