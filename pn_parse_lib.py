@@ -341,6 +341,11 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
                         #set last_start to start of feature
                         last_start=cur_feature.location.start.position
                     else:
+                        #check for pseudogene (which may be coded as CDS
+                        #yet have no associated protein_id nor product
+                        if not("protein_id" in cur_feature.qualifiers):
+                            cur_feature.qualifiers.update({"protein_id":["PseudoGene"]})
+                            cur_feature.qualifiers.update({"product":["PseudoGene"]})
                         print "-- Another CDS \n--", cur_feature.location, cur_feature.qualifiers["protein_id"][0], cur_feature.qualifiers["product"][0]
                         #if intergenic region < max allowed (i.e. operon)
                         adist=last_start-cur_feature.location.end.position
