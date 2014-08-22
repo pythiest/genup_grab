@@ -256,6 +256,13 @@ def SeqIO_grab_ext_nuc_rec(nuc_acc, window_size):
     sstart=0
     sstop=0
     sstrand=nuc_acc[1]
+    
+    #if gene is incomplete, strip the incomplete chars
+    nuc_acc[2]=nuc_acc[2].strip("<")
+    nuc_acc[2]=nuc_acc[2].strip(">")
+    nuc_acc[3]=nuc_acc[3].strip("<")
+    nuc_acc[3]=nuc_acc[3].strip(">")
+    
     #if forward gene
     if (sstrand=="1"):
         #start of sequence to grab becomes start-window
@@ -320,6 +327,8 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
         #if a CDS is found
         if (cur_feature.type=="CDS"):
             print "CDS found"
+            ###print cur_feature
+            ###print cur_feature.qualifiers
             #if we reached the end of the segment, return -1
             #will save the protein ID for which we did not get 
             #an intergenic region (the segment was too small)
@@ -327,7 +336,8 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
                 print "|---->Run out of upstream space."
                 if (last_start is None):
                     print "|---->Likely misannotated start."
-                    return(-1,-2)
+                    print "|---->Typically from gene within. Skipping it"
+                    ###return(-1,-2)
                 else:
                     return(-1,-1)
             else:
@@ -359,8 +369,12 @@ def SeqIO_extract_operon_up(nuc_rec, up_d, down_d, int_d):
                             print "|---->Intergenic distance too long; ending here"
                             break
                 else:
-                    print "|---->Gene in reverse strand; ending here"
-                    break
+                    #if we are on first gene
+                    if (last_start is None):
+                        print "|---->Likely reverse gene overlapping. Skipping it"
+                    else:
+                        print "|---->Gene in reverse strand; ending here"
+                        break
         else:
             print "Non-CDS: ", cur_feature.type
     
